@@ -43,7 +43,7 @@
                 set reminder for this todo
               </label>
             </div>
-
+            <div class="text-white" v-if="loading">Loading...</div>
             <ul class="task-item p-0">
               <li
                 class="task-list-item d-flex"
@@ -52,7 +52,11 @@
                 v-on:dblclick="Highlight(index)"
                 :class="{ highlighted: task.isHighlighted }"
               >
-                <span class="TitleFont">{{ task.title }}</span>
+                <div class="d-flex" style="flex-direction: column; width: 100%">
+                  <h5 class="TitleFont">{{ task.title }}</h5>
+
+                  <span class="TitleFont">{{ task.description }}</span>
+                </div>
 
                 <button class="Buttons">
                   <span @click="CloseTask(index)">
@@ -89,12 +93,41 @@
 <script>
 import Modal from "./Modal.vue";
 import Datepicker from "vuejs-datepicker";
+import axios from "axios";
 export default {
   name: "App",
   components: {
     Modal,
     Datepicker,
   },
+  created() {
+    this.loading = true;
+    axios
+      .get("https://swapi.dev/api/people/")
+      .then((Response) => {
+        Response.data.results.forEach((element) => {
+          this.loading = false;
+          this.tasks.push({
+            title: element.name,
+            description:
+              "hair-color:" +
+              element.hair_color +
+              "  |  " +
+              "haight:" +
+              element.height +
+              "  |  " +
+              "skin_color:" +
+              element.skin_color,
+            isHighlighted: false,
+          });
+          // console.log(element);
+        });
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  },
+
   data() {
     return {
       Check: false,
@@ -102,23 +135,17 @@ export default {
       ModalValue: "",
       task: "",
       TaskDate: "",
-      tasks: [
-        {
-          title:
-            "vue-todo is a todo web app where users can type in their todo and also set a reminder.",
-          isHighlighted: false,
-        },
-        {
-          TaskDate: "01 Feb 2022",
-          title: "https://vuejsexamples.com/",
-          isHighlighted: false,
-        },
-      ],
+      loading: false,
+      tasks: [],
     };
   },
   methods: {
     AddTodo() {
-      this.tasks.push({ TaskDate: this.TaskDate, title: this.task });
+      this.tasks.push({
+        TaskDate: this.TaskDate,
+        title: this.task,
+        isHighlighted: false,
+      });
       this.task = "";
       this.TaskDate = "";
     },
